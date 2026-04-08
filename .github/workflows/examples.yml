@@ -16,15 +16,13 @@ permissions:
 
 jobs:
   run-java-example:
-    runs-on: hashgraph-docs-linux-medium
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
 
     env:
       HEDERA_NETWORK: local
-      MIRROR_NODE_URL: http://localhost:8080/api/v1
-      MIRROR_HEALTH_URL: http://localhost:8080/health
       MIRROR_HEALTH_TRIES: "180"
       MIRROR_HEALTH_INTERVAL: "2"
       STATUS_DIR: .github/example-status
@@ -81,9 +79,36 @@ jobs:
           kind create cluster -n "${SOLO_CLUSTER_NAME}"
           solo one-shot single deploy | tee solo-deploy.log
 
+      - name: Extract Solo port forwards
+        id: solo_ports
+        run: |
+          set -euo pipefail
+
+          mirror_port=$(grep -oP 'Mirror ingress controller port forward enabled on localhost:\K[0-9]+' solo-deploy.log || true)
+          grpc_port=$(grep -oP 'Consensus Node gRPC port forward enabled on localhost:\K[0-9]+' solo-deploy.log || true)
+          relay_port=$(grep -oP 'JSON RPC Relay port forward enabled on localhost:\K[0-9]+' solo-deploy.log || true)
+          explorer_port=$(grep -oP 'Explorer port forward enabled on localhost:\K[0-9]+' solo-deploy.log || true)
+
+          if [ -z "$mirror_port" ]; then
+            echo "❌ Could not extract Mirror ingress port from solo-deploy.log"
+            grep -i "port forward" solo-deploy.log || true
+            exit 1
+          fi
+
+          echo "mirror_port=${mirror_port}" >> "$GITHUB_OUTPUT"
+          echo "grpc_port=${grpc_port}" >> "$GITHUB_OUTPUT"
+          echo "relay_port=${relay_port}" >> "$GITHUB_OUTPUT"
+          echo "explorer_port=${explorer_port}" >> "$GITHUB_OUTPUT"
+
+          echo "Extracted ports:"
+          echo "  Mirror ingress: ${mirror_port}"
+          echo "  gRPC:           ${grpc_port}"
+          echo "  Relay:          ${relay_port}"
+          echo "  Explorer:       ${explorer_port}"
+
       - name: Wait for Mirror Node data (/network/nodes)
         env:
-          API_BASE: ${{ env.MIRROR_NODE_URL }}
+          API_BASE: "http://localhost:${{ steps.solo_ports.outputs.mirror_port }}/api/v1"
           TRIES: "180"
           INTERVAL: "2"
         shell: bash
@@ -199,7 +224,7 @@ jobs:
           OPERATOR_ID: ${{ env.OPERATOR_ID }}
           OPERATOR_KEY: ${{ env.OPERATOR_KEY}}
           HEDERA_NETWORK: ${{ env.HEDERA_NETWORK }}
-          MIRROR_NODE_URL: ${{ env.MIRROR_NODE_URL }}
+          MIRROR_NODE_URL: "http://localhost:${{ steps.solo_ports.outputs.mirror_port }}/api/v1"
         run: |
           chmod +x ./.github/scripts/run-java.sh
           ./.github/scripts/run-java.sh | tee java-output.txt
