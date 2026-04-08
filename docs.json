@@ -17,16 +17,8 @@
       "destination": "/#getting-started"
     },
     {
-      "source": "/hedera/:slug*",
-      "destination": "/:slug*"
-    },
-    {
-      "source": "/hedera",
+      "source": "/guides/docs",
       "destination": "/"
-    },
-    {
-      "source": "/guides/:slug*",
-      "destination": "/:slug*"
     },
     {
       "source": "/guides/docs/mirror-node-api/cryptocurrency-api",
@@ -70,16 +62,16 @@
   },
   "fonts": {
     "heading": {
-      "family": "Styrene A",
-      "source": "/public/fonts/styrene/StyreneA-Regular-Web.woff2",
+      "family": "Styrene A Medium",
+      "source": "/public/fonts/styrene/StyreneA-Medium-Web.woff2",
       "format": "woff2",
-      "weight": 400
+      "weight": 700
     },
     "body": {
-      "family": "Styrene A",
-      "source": "/public/fonts/styrene/StyreneA-Regular-Web.woff2",
+      "family": "Styrene Light Web",
+      "source": "/public/fonts/styrene/StyreneA-Light-Web.woff2",
       "format": "woff2",
-      "weight": 400
+      "weight": 500
     }
   },
   "background": {
@@ -98,8 +90,15 @@
       "perplexity",
       "mcp",
       "cursor",
-      "vscode"
+      "vscode",
+      "add-mcp",
+      "grok"
     ]
+  },
+  "integrations": {
+    "gtm": {
+      "tagId": "GTM-NHLK548"
+    }
   },
   "navigation": {
     "global": {
@@ -177,6 +176,8 @@
                   "hedera/tutorials/smart-contracts/send-and-receive-hbar-using-solidity-smart-contracts",
                   "hedera/tutorials/smart-contracts/deploy-a-subgraph-using-the-graph-and-json-rpc",
                   "hedera/tutorials/smart-contracts/deploy-smart-contracts-on-hedera-using-truffle",
+                  "hedera/tutorials/smart-contracts/how-to-fork-the-hedera-network-with-hardhat-basic-erc20",
+                  "hedera/tutorials/smart-contracts/how-to-fork-the-hedera-network-with-hardhat-advanced-hts",
                   {
                     "group": "Foundry on Hedera",
                     "pages": [
@@ -184,7 +185,8 @@
                       "hedera/tutorials/smart-contracts/foundry/configuring-foundry-with-hedera-localnet-testnet-a-step-by-step-guide",
                       "hedera/tutorials/smart-contracts/foundry/how-to-mint-and-burn-an-erc-721-token-using-foundry-part-1",
                       "hedera/tutorials/smart-contracts/foundry/how-to-write-tests-in-solidity-part-2",
-                      "hedera/tutorials/smart-contracts/foundry/how-to-fork-the-hedera-network-for-local-testing"
+                      "hedera/tutorials/smart-contracts/foundry/how-to-fork-the-hedera-network-with-foundry-basic-erc20",
+                      "/hedera/tutorials/smart-contracts/foundry/how-to-fork-the-hedera-network-with-foundry-advanced-hts"
                     ]
                   },
                   "hedera/tutorials/smart-contracts/how-to-connect-metamask-to-hedera"
@@ -196,6 +198,7 @@
                   "hedera/tutorials/consensus",
                   "hedera/tutorials/consensus/submit-your-first-message",
                   "hedera/tutorials/consensus/submit-message-to-private-topic",
+                  "hedera/tutorials/consensus/batch-anchor-verify-records-with-hcs",
                   "hedera/tutorials/consensus/query-messages-with-mirror-node"
                 ]
               },
@@ -233,6 +236,7 @@
                 "group": "More Tutorials",
                 "pages": [
                   "hedera/tutorials/more-tutorials",
+                  "hedera/tutorials/more-tutorials/hedera-mcp-server-setup-guide",
                   "hedera/tutorials/more-tutorials/create-and-fund-your-hedera-testnet-account",
                   "hedera/tutorials/more-tutorials/how-to-create-a-personal-access-token-api-key-on-the-hedera-portal",
                   "hedera/tutorials/more-tutorials/how-to-auto-create-hedera-accounts-with-hbar-and-token-transfers",
@@ -246,7 +250,16 @@
                     ]
                   },
                   "hedera/tutorials/more-tutorials/schedule-your-first-transaction",
-                  "hedera/tutorials/more-tutorials/javascript-testing"
+                  "hedera/tutorials/more-tutorials/javascript-testing",
+                  {
+                    "group": "HSM/KMS Signing Solutions",
+                    "pages": [
+                      "hedera/tutorials/more-tutorials/HSM-signing",
+                      "hedera/tutorials/more-tutorials/HSM-signing/aws-kms",
+                      "hedera/tutorials/more-tutorials/HSM-signing/azure-key-vault",
+                      "hedera/tutorials/more-tutorials/HSM-signing/gcp-kms"
+                    ]
+                  }
                 ]
               },
               "hedera/tutorials/demo-applications",
@@ -323,7 +336,9 @@
                   "hedera/core-concepts/accounts",
                   "hedera/core-concepts/accounts/account-creation",
                   "hedera/core-concepts/accounts/auto-account-creation",
-                  "hedera/core-concepts/accounts/account-properties"
+                  "hedera/core-concepts/accounts/account-properties",
+                  "hedera/core-concepts/accounts/network-accounts",
+                  "hedera/core-concepts/accounts/hiero-hooks"
                 ]
               },
               "hedera/core-concepts/keys-and-signatures",
@@ -388,7 +403,8 @@
                   "hedera/core-concepts/smart-contracts/wrapped-hbar-whbar",
                   "hedera/core-concepts/smart-contracts/smart-contract-rent",
                   "hedera/core-concepts/smart-contracts/security",
-                  "hedera/core-concepts/smart-contracts/evm-archive-node-queries"
+                  "hedera/core-concepts/smart-contracts/evm-archive-node-queries",
+                  "hedera/core-concepts/smart-contracts/forking-hedera-network-for-local-testing"
                 ]
               },
               {
@@ -461,15 +477,54 @@
                 "group": "AI Studio on Hedera",
                 "pages": [
                   "hedera/open-source-solutions/ai-studio-on-hedera",
-                  "hedera/open-source-solutions/ai-studio-on-hedera/hedera-ai-agent-kit",
+                  "hedera/open-source-solutions/ai-studio-on-hedera/agent-lab",
+                  "hedera/open-source-solutions/ai-studio-on-hedera/hedera-ai-agent-kit/elizaos-plugin",
+                  {
+                    "group": "Hedera AI Agent Kit",
+                    "pages": [
+                      "hedera/open-source-solutions/ai-studio-on-hedera/hedera-ai-agent-kit",
+                      "hedera/open-source-solutions/ai-studio-on-hedera/hedera-ai-agent-kit/plugins",
+                      {
+                        "group": "JavaScript SDK",
+                        "pages": [
+                          "hedera/open-source-solutions/ai-studio-on-hedera/hedera-ai-agent-kit/hedera-agent-kit-js/quickstart",
+                          "hedera/open-source-solutions/ai-studio-on-hedera/hedera-ai-agent-kit/hedera-agent-kit-js/create-js-plugins"
+                        ]
+                      },
+                      {
+                        "group": "Python SDK",
+                        "pages": [
+                          "hedera/open-source-solutions/ai-studio-on-hedera/hedera-ai-agent-kit/hedera-agent-kit-py/quickstart",
+                          "hedera/open-source-solutions/ai-studio-on-hedera/hedera-ai-agent-kit/hedera-agent-kit-py/create-py-plugins"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Hiero CLI",
+                "pages": [
+                  "hedera/open-source-solutions/hiero-cli/overview",
                   {
                     "group": "Plugins",
                     "pages": [
-                      "hedera/open-source-solutions/ai-studio-on-hedera/plugins",
-                      "hedera/open-source-solutions/ai-studio-on-hedera/plugins/how-to-publish-and-register-your-plugin"
+                      "/hedera/open-source-solutions/hiero-cli/plugins/credentials-plugin",
+                      "/hedera/open-source-solutions/hiero-cli/plugins/network-plugin",
+                      "/hedera/open-source-solutions/hiero-cli/plugins/hbar-plugin",
+                      "/hedera/open-source-solutions/hiero-cli/plugins/account-plugin",
+                      "/hedera/open-source-solutions/hiero-cli/plugins/token-plugin",
+                      "/hedera/open-source-solutions/hiero-cli/plugins/topic-plugin",
+                      "/hedera/open-source-solutions/hiero-cli/plugins/config-plugin",
+                      "/hedera/open-source-solutions/hiero-cli/plugins/plugin-management-plugin"
                     ]
                   },
-                  "hedera/open-source-solutions/ai-studio-on-hedera/elizaos-plugin-for-hedera"
+                  {
+                    "group": "Scripting",
+                    "pages": [
+                      "/hedera/open-source-solutions/hiero-cli/scripting/quickstart"
+                    ]
+                  }
                 ]
               },
               {
@@ -499,7 +554,6 @@
                   "hedera/open-source-solutions/hashiodao/local-environment-setup"
                 ]
               },
-              "hedera/open-source-solutions/hedera-cli",
               "hedera/open-source-solutions/hedera-contract-builder",
               {
                 "group": "Hedera Custodians Library",
@@ -557,7 +611,6 @@
                   "hedera/open-source-solutions/stablecoin-studio/cli-management",
                   "hedera/open-source-solutions/github-com-hashgraph-hedera-accelerator-stablecoin-tree-main-sdk"
                 ]
-  
               },
               "hedera/open-source-solutions/hedera-guardian",
               "hedera/open-source-solutions/hedera-walletconnect"
@@ -594,6 +647,7 @@
                     "pages": [
                       "hedera/sdks-and-apis/sdks/transactions",
                       "hedera/sdks-and-apis/sdks/transactions/create-a-batch-transaction",
+                      "hedera/sdks-and-apis/sdks/transactions/create-a-hookstore-transaction",
                       "hedera/sdks-and-apis/sdks/transactions/transaction-id",
                       "hedera/sdks-and-apis/sdks/transactions/modify-transaction-fields",
                       "hedera/sdks-and-apis/sdks/transactions/create-an-unsigned-transaction",
@@ -626,6 +680,8 @@
                       "hedera/sdks-and-apis/sdks/accounts-and-hbar/update-an-account",
                       "hedera/sdks-and-apis/sdks/accounts-and-hbar/transfer-cryptocurrency",
                       "hedera/sdks-and-apis/sdks/accounts-and-hbar/approve-an-allowance",
+                      "hedera/sdks-and-apis/sdks/accounts-and-hbar/create-and-manage-hooks",
+                      "hedera/sdks-and-apis/sdks/accounts-and-hbar/create-a-hookstore-transaction",
                       "hedera/sdks-and-apis/sdks/accounts-and-hbar/adjust-an-allowance",
                       "hedera/sdks-and-apis/sdks/accounts-and-hbar/delete-an-account",
                       "hedera/sdks-and-apis/sdks/accounts-and-hbar/get-account-balance",
@@ -1132,6 +1188,14 @@
     "href": "https://hedera.com/"
   },
   "navbar": {
+    "links": [
+      {
+        "label": "Join Hackathon",
+        "href": "https://hedera.com/hackathon",
+        "target": "_blank",
+        "icon": "code"
+      }
+    ],
     "primary": {
       "type": "button",
       "label": "Dev Portal",
