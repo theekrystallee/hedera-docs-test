@@ -9,23 +9,10 @@ const fs = require('fs');
 
 const REPO_URL = 'https://github.com/hiero-ledger/hiero-mirror-node';
 
-const KNOWN_CATEGORIES = [
-  'Breaking Changes',
-  'Enhancements',
-  'Bug Fixes',
-  'Dependency Upgrades',
-  'Deployments',
-  'Contributors',
-];
-
-const CATEGORY_ORDER = [
-  'Breaking Changes',
-  'Enhancements',
-  'Bug Fixes',
-  'Dependency Upgrades',
-  'Deployments',
-  'Contributors',
-];
+// The only categories rendered as accordions on this page, in this order.
+// The release body also emits "Breaking Changes" (rewritten as editorial prose
+// by a human), "Deployments", and "Contributors" — all intentionally dropped.
+const RENDER_CATEGORIES = ['Enhancements', 'Bug Fixes', 'Dependency Upgrades'];
 
 const ANCHOR_REGEX = /^##\s+Latest Releases\s*\r?\n/m;
 
@@ -107,11 +94,14 @@ function parseReleaseBody(body) {
     }
 
     if (currentCategory && /^[-*]\s+/.test(line)) {
-      // Strip the bullet marker and reduce the release body's PR links
-      // (`[#NNN](url)`) to the plain `#NNN` ref this page uses.
+      // Normalize a release-body bullet to this page's style:
+      //  - strip the leading marker
+      //  - reduce PR links `[#NNN](url)` to the plain `#NNN` ref the page uses
+      //  - unescape markdown-escaped punctuation (e.g. `\_` -> `_`)
       const bullet = line
         .replace(/^[-*]\s+/, '')
         .replace(/\[#(\d+)\]\([^)]*\)/g, '#$1')
+        .replace(/\\([^A-Za-z0-9])/g, '$1')
         .trimEnd();
 
       if (bullet.trim()) {
@@ -124,22 +114,14 @@ function parseReleaseBody(body) {
 }
 
 function buildCategoryOrder(blocks) {
-  const categoriesWithContent = [...blocks.keys()].filter(
-    category => blocks.get(category).length > 0
+  // Only the canonical accordion categories, in canonical order, that have
+  // content. Everything else in the body (Breaking Changes, Deployments,
+  // Contributors, anything new) is intentionally not rendered as an accordion.
+  const orderedCategories = RENDER_CATEGORIES.filter(
+    category => blocks.has(category) && blocks.get(category).length > 0
   );
 
-  const unknownCategories = categoriesWithContent.filter(
-    category => !KNOWN_CATEGORIES.includes(category)
-  );
-
-  const orderedCategories = [
-    ...CATEGORY_ORDER.filter(
-      category => blocks.has(category) && blocks.get(category).length > 0
-    ),
-    ...unknownCategories.sort(),
-  ];
-
-  return { orderedCategories, unknownCategories };
+  return { orderedCategories };
 }
 
 function main() {
@@ -187,7 +169,7 @@ function main() {
   }
 
   const blocks = parseReleaseBody(body);
-  const { orderedCategories, unknownCategories } = buildCategoryOrder(blocks);
+  const { orderedCategories } = buildCategoryOrder(blocks);
 
   const totalBullets = orderedCategories.reduce(
     (sum, category) => sum + blocks.get(category).length,
@@ -210,11 +192,11 @@ function main() {
 
   const warnings = [];
 
-  if (unknownCategories.length > 0) {
+  // Breaking Changes are rewritten as editorial prose by a human, not rendered
+  // as an accordion. If the body has a Breaking Changes section, flag it.
+  if (blocks.has('Breaking Changes')) {
     warnings.push(
-      `<!-- warning: unexpected categories from release body were included below: ${unknownCategories.join(
-        ', '
-      )}. Review manually. -->`
+      '<!-- TODO: this release has Breaking Changes in the upstream notes — add a "### Breaking Changes" prose section above the accordions. -->'
     );
   }
 
