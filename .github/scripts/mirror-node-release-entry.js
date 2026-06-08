@@ -107,10 +107,14 @@ function parseReleaseBody(body) {
     }
 
     if (currentCategory && /^[-*]\s+/.test(line)) {
-      const bullet = line.replace(/^[-*]\s+/, '').trimEnd();
+      // Strip the bullet marker and reduce the release body's PR links
+      // (`[#NNN](url)`) to the plain `#NNN` ref this page uses.
+      const bullet = line
+        .replace(/^[-*]\s+/, '')
+        .replace(/\[#(\d+)\]\([^)]*\)/g, '#$1')
+        .trimEnd();
 
       if (bullet.trim()) {
-        // Keep the original release body link format, usually [#NNN](url).
         blocks.get(currentCategory).push(`  * ${bullet}`);
       }
     }
@@ -200,7 +204,7 @@ function main() {
   const accordions = orderedCategories
     .map(category => {
       const title = escapeMdxAttribute(category);
-      return `<Accordion title="${title}">\n\n${blocks.get(category).join('\n')}\n\n</Accordion>`;
+      return `<Accordion title="${title}">\n${blocks.get(category).join('\n')}\n</Accordion>`;
     })
     .join('\n\n');
 
