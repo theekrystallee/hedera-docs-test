@@ -7,6 +7,15 @@ Visit the [Hedera status page](https://status.hedera.com/) for the latest versio
 
 ## Latest Releases
 
+
+## [v0.155.1](https://github.com/hiero-ledger/hiero-mirror-node/releases/tag/v0.155.1)
+
+_TODO: Add a summary paragraph for this release._
+
+<Accordion title="Bug Fixes">
+  * Fix bad grammar in `RecordFileConsensusTimestampsRecalculateMigration` #13623
+</Accordion>
+
 ## [v0.154.0](https://github.com/hiero-ledger/hiero-mirror-node/releases/tag/v0.154.0)
 
 This release adds support for block hash when simulating or estimating contracts. The `/api/v1/contracts/call` REST API now accepts a 64 or 96 character hexadecimal value for the `block` field. This helps to avoid an extra call to `/api/v1/blocks/{hash}` for clients that only have the block hash.
