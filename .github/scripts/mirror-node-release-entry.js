@@ -218,22 +218,17 @@ function main() {
     );
   }
 
-  // Every entry opens with the release's own summary prose, copied verbatim
-  // from the body. If the body has no preamble, leave a visible placeholder.
-  const summary =
-    extractSummary(body) ||
-    '_TODO: Add a summary paragraph for this release._';
+  // The entry opens with the release's own summary prose, copied verbatim from
+  // the body. If the body has no preamble (e.g. a small patch release), omit it
+  // entirely — no placeholder.
+  const summary = extractSummary(body);
 
-  const entry = [
-    `## [v${version}](${tagUrl})`,
-    '',
-    summary,
-    ...warnings,
-    '',
-    accordions,
-    '',
-    '',
-  ].join('\n');
+  const parts = [`## [v${version}](${tagUrl})`, ''];
+  if (summary) parts.push(summary, '');
+  if (warnings.length > 0) parts.push(...warnings, '');
+  parts.push(accordions, '', '');
+
+  const entry = parts.join('\n');
 
   const anchorMatch = existingContent.match(ANCHOR_REGEX);
 
