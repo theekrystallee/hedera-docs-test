@@ -1,8 +1,12 @@
 #!/usr/bin/env node
-// Determines which upstream releases are missing from the release-notes page.
+// Determines which upstream releases are missing from a release-notes page.
 // Prints the missing stable versions newer than the latest documented one,
 // oldest-first, one per line. The caller adds them in that order so the newest
 // ends up at the top of the page.
+//
+// Works for both page styles:
+//   - mirror node:    "## [v0.155.1](...)"
+//   - consensus node: "### [**Build 0.74.0**](...)"
 //
 // Usage:
 // node select-backfill-versions.js --target path/to/notes.mdx --releases releases.json
@@ -13,6 +17,9 @@
 'use strict';
 
 const fs = require('fs');
+
+// Matches the newest documented version in either heading style.
+const HEADING_REGEX = /^(?:## \[v|### \[\*\*Build )(\d+\.\d+\.\d+)\b/m;
 
 function parseArgs(argv) {
   const parsed = {};
@@ -68,10 +75,10 @@ function main() {
 
   const content = fs.readFileSync(target, 'utf8');
 
-  // The latest documented version is the first stable X.Y.Z heading on the page.
-  const headingMatch = content.match(/^## \[v(\d+\.\d+\.\d+)\]/m);
+  // The latest documented version is the first version heading on the page.
+  const headingMatch = content.match(HEADING_REGEX);
   if (!headingMatch) {
-    throw new Error(`Could not find a documented "## [vX.Y.Z]" heading in ${target}.`);
+    throw new Error(`Could not find a documented version heading in ${target}.`);
   }
   const documentedLatest = headingMatch[1];
 
