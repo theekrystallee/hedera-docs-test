@@ -1,0 +1,118 @@
+name: Mirror Node Release Notes
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Mirror node version, e.g. 0.155.1 or v0.155.1. Leave blank to use the latest upstream release.'
+        required: false
+        type: string
+  schedule:
+    # Daily at 07:00 UTC. Resolves the latest upstream release; no-op if already documented.
+    - cron: '0 7 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  add-release-notes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout docs repo
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
+        with:
+          node-version: '22'
+
+      - name: Resolve and validate version
+        id: version
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_INPUT: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          # Use the provided version, or resolve the latest upstream release
+          # when blank (scheduled runs always take this path).
+          if [[ -n "${VERSION_INPUT}" ]]; then
+            RAW="${VERSION_INPUT}"
+          else
+            RAW="$(gh release view \
+              --repo hiero-ledger/hiero-mirror-node \
+              --json tagName \
+              --jq .tagName)"
+            echo "Resolved latest upstream release: ${RAW}"
+          fi
+
+          VERSION="${RAW#v}"
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid version: ${RAW}" >&2
+            echo "Expected X.Y.Z or vX.Y.Z, for example 0.155.1 or v0.155.1." >&2
+            exit 1
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch release body from hiero-ledger/hiero-mirror-node
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          gh release view "v${VERSION}" \
+            --repo hiero-ledger/hiero-mirror-node \
+            --json body,tagName,url \
+            > "$RUNNER_TEMP/release.json"
+
+      - name: Generate MDX entry
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          node .github/scripts/mirror-node-release-entry.js \
+            --version "$VERSION" \
+            --release-json "$RUNNER_TEMP/release.json" \
+            --target learn/release-notes/mirror-node.mdx
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: learn/release-notes/mirror-node.mdx
+          commit-message: "docs: add mirror node v${{ steps.version.outputs.version }} release notes"
+          signoff: true
+          sign-commits: true
+          branch: "automation/mirror-node-v${{ steps.version.outputs.version }}"
+          title: "docs: mirror node v${{ steps.version.outputs.version }} release notes"
+          assignees: ${{ github.actor }}
+          labels: automated-pr
+          delete-branch: true
+          body: |
+            ## Mirror Node v${{ steps.version.outputs.version }} Release Notes
+
+            This PR adds release notes for mirror node v${{ steps.version.outputs.version }}.
+
+            **Source:** https://github.com/hiero-ledger/hiero-mirror-node/releases/tag/v${{ steps.version.outputs.version }}
+
+            ### Review checklist
+
+            - [ ] Verify bullets are accurate and complete
+            - [ ] Replace `<!-- summary: TODO - add a one-sentence editorial summary above this comment -->` with a one-sentence editorial summary for minor releases
+            - [ ] Check for breaking changes that warrant an `<Info>` callout
+            - [ ] Check for HIP references that should link to hips.hedera.com
+            - [ ] Check any generated warning comments before merging
