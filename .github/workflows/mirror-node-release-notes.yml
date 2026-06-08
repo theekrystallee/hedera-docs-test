@@ -1,6 +1,9 @@
 name: Mirror Node Release Notes
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       version:
@@ -8,12 +11,16 @@ on:
         required: false
         type: string
   schedule:
-    # Daily at 07:00 UTC. Backfills any releases missing from the page.
+    # Daily at 07:00 UTC. Safety net in case no push to main happened that day.
     - cron: '0 7 * * *'
 
 permissions:
   contents: write
   pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   TARGET: learn/release-notes/mirror-node.mdx
