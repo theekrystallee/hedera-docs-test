@@ -200,7 +200,7 @@ function main() {
   const accordions = orderedCategories
     .map(category => {
       const title = escapeMdxAttribute(category);
-      return `<Accordion title="${title}">\n${blocks.get(category).join('\n')}\n</Accordion>`;
+      return `<Accordion title="${title}">\n\n${blocks.get(category).join('\n')}\n\n</Accordion>`;
     })
     .join('\n\n');
 
