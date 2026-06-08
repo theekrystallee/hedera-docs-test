@@ -98,6 +98,13 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Pull network upgrade dates from the Hedera status page (used to fill
+          # in mainnet/testnet dates when scaffolding a new minor section).
+          # Non-fatal: the script falls back to TODO dates if this is missing.
+          curl -sSfL --max-time 30 \
+            https://status.hedera.com/api/v2/scheduled-maintenances.json \
+            > "$RUNNER_TEMP/status.json" || echo '{}' > "$RUNNER_TEMP/status.json"
+
           # Oldest-first so the newest release ends up prepended last (on top).
           while IFS= read -r VERSION; do
             [[ -z "$VERSION" ]] && continue
@@ -110,7 +117,8 @@ jobs:
             node .github/scripts/consensus-node-release-entry.js \
               --version "$VERSION" \
               --release-json "$RUNNER_TEMP/release.json" \
-              --target "$TARGET"
+              --target "$TARGET" \
+              --status-json "$RUNNER_TEMP/status.json"
             echo "::endgroup::"
           done < "$RUNNER_TEMP/versions.txt"
 

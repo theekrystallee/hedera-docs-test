@@ -129,15 +129,81 @@ function buildChangelogBlock(version, tagUrl, categories) {
   ].join('\n');
 }
 
-function buildStubMinorSection(minor, changelogBlock) {
+const MONTHS = [
+  'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+  'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
+];
+
+// Format an ISO timestamp as the page's date style, e.g. "JUNE 10, 2026".
+function formatStatusDate(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return `${MONTHS[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}`;
+}
+
+// Read the Hedera status page's scheduled-maintenances payload, if provided.
+function readStatusMaintenances(path) {
+  if (!path) return null;
+  try {
+    const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+    return Array.isArray(data.scheduled_maintenances) ? data.scheduled_maintenances : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+// Find the upgrade-window date for a given network + version from the status
+// maintenances. Matches names like "Mainnet Upgrade to v0.74" (-> 0.74.0) or
+// "Testnet Upgrade to v0.74.0". Returns { date, completed } or null.
+function findUpgradeDate(maintenances, network, version) {
+  if (!maintenances) return null;
+
+  const matches = [];
+  for (const m of maintenances) {
+    const name = m.name || '';
+    if (!name.toLowerCase().includes(network.toLowerCase())) continue;
+    if (!/upgrade/i.test(name)) continue;
+
+    const versionMatch = name.match(/v?(\d+\.\d+(?:\.\d+)?)/);
+    if (!versionMatch) continue;
+
+    let found = versionMatch[1];
+    if (/^\d+\.\d+$/.test(found)) found += '.0'; // normalize minor-only to X.Y.0
+    if (found !== version) continue;
+
+    const iso = m.scheduled_for || m.created_at;
+    if (iso) matches.push({ iso, completed: m.status === 'completed' });
+  }
+
+  if (matches.length === 0) return null;
+
+  // Prefer the most recent matching window.
+  matches.sort((a, b) => new Date(b.iso) - new Date(a.iso));
+  const date = formatStatusDate(matches[0].iso);
+  return date ? { date, completed: matches[0].completed } : null;
+}
+
+// Render a network status line. Completed upgrades use <Check>/"UPDATED";
+// upcoming ones use <Info>/"UPDATE". Falls back to a TODO when the status page
+// has no date for this version yet.
+function networkBlock(label, info) {
+  if (!info) {
+    return [`<Info>`, `  **${label} UPDATE: TODO**`, `</Info>`];
+  }
+  if (info.completed) {
+    return [`<Check>`, `  **${label} UPDATED: ${info.date}**`, `</Check>`];
+  }
+  return [`<Info>`, `  **${label} UPDATE: ${info.date}**`, `</Info>`];
+}
+
+function buildStubMinorSection(minor, version, changelogBlock, maintenances) {
+  const mainnet = findUpgradeDate(maintenances, 'Mainnet', version);
+  const testnet = findUpgradeDate(maintenances, 'Testnet', version);
+
   return [
     `## Release v${minor}`,
-    `<Info>`,
-    `  **MAINNET UPDATE: TODO**`,
-    `</Info>`,
-    `<Info>`,
-    `  **TESTNET UPDATE: TODO**`,
-    `</Info>`,
+    ...networkBlock('MAINNET', mainnet),
+    ...networkBlock('TESTNET', testnet),
     '',
     `<!-- highlights: TODO - add a "### Release highlights" paragraph and a "What's new in Release v${minor}?" accordion above the build block -->`,
     '',
@@ -151,10 +217,13 @@ function main() {
   const version = normalizeVersion(args.version);
   const releaseJsonPath = args['release-json'];
   const target = args.target;
+  // Optional: Hedera status page scheduled-maintenances JSON, used to fill in
+  // mainnet/testnet upgrade dates when scaffolding a new minor section.
+  const maintenances = readStatusMaintenances(args['status-json']);
 
   if (!releaseJsonPath || !target) {
     throw new Error(
-      'Usage: node consensus-node-release-entry.js --version X.Y.Z --release-json release.json --target path/to/services.mdx'
+      'Usage: node consensus-node-release-entry.js --version X.Y.Z --release-json release.json --target path/to/services.mdx [--status-json status.json]'
     );
   }
 
@@ -252,7 +321,7 @@ function main() {
       throw new Error(`Could not find any "## Release v" section in ${target} to anchor the new minor section.`);
     }
 
-    const stubSection = buildStubMinorSection(minor, changelogBlock);
+    const stubSection = buildStubMinorSection(minor, version, changelogBlock, maintenances);
     updated =
       existingContent.slice(0, firstSectionIndex) +
       `${stubSection}\n\n` +
@@ -260,7 +329,7 @@ function main() {
 
     console.log(
       `Created stub "## Release v${minor}" section for new minor release and inserted Build ${version}. ` +
-        `Editorial content (dates, highlights) is marked TODO for manual completion.`
+        `Mainnet/testnet dates pulled from the status page when available; release highlights are left TODO for manual completion.`
     );
   }
 
