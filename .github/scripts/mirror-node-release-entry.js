@@ -76,6 +76,24 @@ function writeFile(path, content) {
   }
 }
 
+// The release body opens with a prose summary before the first `## Category`
+// header. Copy it verbatim (minus a leading `# ...` title) as the entry's
+// summary paragraph — markdown-escaped punctuation is unescaped to match the page.
+function extractSummary(body) {
+  const summaryLines = [];
+
+  for (const line of body.split(/\r?\n/)) {
+    if (/^##\s/.test(line)) break; // stop at the first category header
+    if (/^#\s/.test(line)) continue; // skip a leading H1 title (e.g. "# Release Notes")
+    summaryLines.push(line);
+  }
+
+  return summaryLines
+    .join('\n')
+    .replace(/\\([^A-Za-z0-9])/g, '$1')
+    .trim();
+}
+
 function parseReleaseBody(body) {
   const blocks = new Map();
   let currentCategory = null;
@@ -200,15 +218,16 @@ function main() {
     );
   }
 
-  // Every entry opens with an editorial summary paragraph. The script can't
-  // write it, so it emits a visible placeholder for the author to replace.
-  const summaryPlaceholder =
-    '_TODO: Replace this line with a 1-2 sentence summary of this release._';
+  // Every entry opens with the release's own summary prose, copied verbatim
+  // from the body. If the body has no preamble, leave a visible placeholder.
+  const summary =
+    extractSummary(body) ||
+    '_TODO: Add a summary paragraph for this release._';
 
   const entry = [
     `## [v${version}](${tagUrl})`,
     '',
-    summaryPlaceholder,
+    summary,
     ...warnings,
     '',
     accordions,
