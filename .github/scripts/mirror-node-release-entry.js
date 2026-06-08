@@ -200,17 +200,15 @@ function main() {
     );
   }
 
-  const patch = Number(version.match(/^\d+\.\d+\.(\d+)/)[1]);
-  const isPatch = patch > 0;
-
-  const summaryNote = isPatch
-    ? '<!-- summary: patch release -->'
-    : '<!-- summary: TODO - add a one-sentence editorial summary above this comment -->';
+  // Every entry opens with an editorial summary paragraph. The script can't
+  // write it, so it emits a visible placeholder for the author to replace.
+  const summaryPlaceholder =
+    '_TODO: Replace this line with a 1-2 sentence summary of this release._';
 
   const entry = [
     `## [v${version}](${tagUrl})`,
     '',
-    summaryNote,
+    summaryPlaceholder,
     ...warnings,
     '',
     accordions,
